@@ -1,7 +1,7 @@
-use std::borrow::Cow;
-use minidom::Element;
 use anyhow::Result;
+use minidom::Element;
 use regex::Regex;
+use std::borrow::Cow;
 
 fn main() -> Result<()> {
     let file = std::fs::read_to_string("pages/7.html")?;
