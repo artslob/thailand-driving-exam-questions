@@ -79,11 +79,11 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
             .nodes()
             .flat_map(|node| match node {
                 Node::Element(element) => (element.name() == "strong").then(|| AnswerChoice {
-                    text: element.texts().join(" ").replace('\n', " "),
+                    text: normalize_answer_text(element.texts().join(" ")).unwrap(),
                     is_answer: true,
                 }),
                 Node::Text(text) => Some(AnswerChoice {
-                    text: text.to_owned().replace('\n', " "),
+                    text: normalize_answer_text(text).unwrap(),
                     is_answer: false,
                 }),
             })
@@ -124,7 +124,12 @@ struct AnswerChoice {
 fn normalize_question_title(title: &str) -> Result<String> {
     let regex = Regex::new(r#"^[\d.]+"#)?;
 
-    Ok(normalize_string(regex.replace(title, "")))
+    Ok(normalize_string(regex.replace(title.trim(), "")))
+}
+
+fn normalize_answer_text(text: impl Into<String>) -> Result<String> {
+    let regex = Regex::new(r#"^[[:alpha:]]\."#)?;
+    Ok(normalize_string(regex.replace(text.into().trim(), "")))
 }
 
 fn normalize_string(s: impl Into<String>) -> String {
@@ -190,6 +195,19 @@ mod tests {
         let input = "15.1 this\n   is test\n question\n";
         let result = normalize_question_title(input)?;
         assert_eq!(result, "this is test question");
+        Ok(())
+    }
+
+    #[test]
+    fn test_normalize_answer_text() -> Result<()> {
+        assert_eq!(
+            normalize_answer_text("D. this\n   is test\n answer\n")?,
+            "this is test answer"
+        );
+        assert_eq!(
+            normalize_answer_text("b.this\n   is test\n answer\n")?,
+            "this is test answer"
+        );
         Ok(())
     }
 }
