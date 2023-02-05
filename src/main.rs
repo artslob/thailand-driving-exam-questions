@@ -1,10 +1,11 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use itertools::Itertools;
-use minidom::Element;
+use minidom::{Element, NSChoice};
 use regex::Regex;
 use std::borrow::Cow;
 
 static QUESTION_CLASS: &str = "has-luminous-vivid-orange-color has-text-color";
+static IMAGE_CLASS: &str = "wp-block-image";
 
 fn main() -> Result<()> {
     let file = std::fs::read_to_string("pages/7.html")?;
@@ -12,7 +13,8 @@ fn main() -> Result<()> {
     let content = fix_img_tags(&content)?;
     let prefixes = (None, String::new());
     let root = Element::from_reader_with_prefixes(content.as_bytes(), prefixes)?;
-    for next in root.children() {
+    let mut element_iter = root.children();
+    while let Some(next) = element_iter.next() {
         let is_question = next.name() == "p" && next.attr("class") == Some(QUESTION_CLASS);
         if !is_question {
             continue;
@@ -24,6 +26,20 @@ fn main() -> Result<()> {
             .join(" ")
             .replace('\n', " ");
         println!("{}", question_title);
+
+        let next = element_iter
+            .next()
+            .context("no html elements after question title")?;
+
+        if next.name() == "div" && next.attr("class") == Some(IMAGE_CLASS) {
+            let img = next
+                .get_child("figure", NSChoice::Any)
+                .context("image div does not have inner figure tag")?
+                .get_child("img", NSChoice::Any)
+                .context("figure tag does not have inner img tag")?;
+            let src = img.attr("src").context("img tag does not have src attr")?;
+            println!("{}", src);
+        }
     }
     Ok(())
 }
