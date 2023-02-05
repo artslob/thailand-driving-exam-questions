@@ -128,7 +128,12 @@ fn normalize_question_title(title: &str) -> Result<String> {
 }
 
 fn normalize_string(s: impl Into<String>) -> String {
-    s.into().replace('\n', " ").trim().to_owned()
+    s.into()
+        .replace('\n', " ")
+        .split_whitespace()
+        .join(" ")
+        .trim()
+        .to_owned()
 }
 
 fn fix_img_tags(input: &str) -> Result<Cow<str>> {
@@ -177,14 +182,14 @@ mod tests {
     fn test_normalize_string() {
         let input = "  this\n   is test\n string\n";
         let result = normalize_string(input);
-        assert_eq!(result, "this    is test  string");
+        assert_eq!(result, "this is test string");
     }
 
     #[test]
     fn test_normalize_question_title() -> Result<()> {
         let input = "15.1 this\n   is test\n question\n";
         let result = normalize_question_title(input)?;
-        assert_eq!(result, "this    is test  question");
+        assert_eq!(result, "this is test question");
         Ok(())
     }
 }
