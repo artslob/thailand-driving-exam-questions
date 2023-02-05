@@ -12,6 +12,7 @@ fn main() -> Result<()> {
     let content = file.replace("&nbsp;", " ").replace("<br>", "<br/>");
     let content = fix_img_tags(&content)?;
     let prefixes = (None, String::new());
+    let mut questions = vec![];
     let root = Element::from_reader_with_prefixes(content.as_bytes(), prefixes)?;
     let mut element_iter = root.children();
     while let Some(next) = element_iter.next() {
@@ -25,25 +26,26 @@ fn main() -> Result<()> {
             .flat_map(|el| el.texts())
             .join(" ")
             .replace('\n', " ");
-        println!("{}", question_title);
 
         let next = element_iter
             .next()
             .context("no html elements after question title")?;
 
-        let next = if next.name() == "div" && next.attr("class") == Some(IMAGE_CLASS) {
+        let (next, img_src) = if next.name() == "div" && next.attr("class") == Some(IMAGE_CLASS) {
             let img = next
                 .get_child("figure", NSChoice::Any)
                 .context("image div does not have inner figure tag")?
                 .get_child("img", NSChoice::Any)
                 .context("figure tag does not have inner img tag")?;
             let src = img.attr("src").context("img tag does not have src attr")?;
-            println!("{}", src);
-            element_iter
-                .next()
-                .context("expected to have elements after image")?
+            (
+                element_iter
+                    .next()
+                    .context("expected to have elements after image")?,
+                Some(src.to_owned()),
+            )
         } else {
-            next
+            (next, None)
         };
 
         if next.name() != "p" {
@@ -52,15 +54,40 @@ fn main() -> Result<()> {
         let answer_choices = next
             .nodes()
             .flat_map(|node| match node {
-                Node::Element(element) => {
-                    (element.name() == "strong").then(|| element.texts().join(" "))
-                }
-                Node::Text(text) => Some(text.to_owned()),
+                Node::Element(element) => (element.name() == "strong").then(|| AnswerChoice {
+                    text: element.texts().join(" "),
+                    is_answer: true,
+                }),
+                Node::Text(text) => Some(AnswerChoice {
+                    text: text.to_owned(),
+                    is_answer: false,
+                }),
             })
             .collect_vec();
-        dbg!(&answer_choices);
+
+        questions.push(Question {
+            title: question_title,
+            img_src,
+            answer_choices,
+        })
     }
+    dbg!(&questions);
     Ok(())
+}
+
+#[allow(dead_code)]
+#[derive(Debug)]
+struct Question {
+    title: String,
+    img_src: Option<String>,
+    answer_choices: Vec<AnswerChoice>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug)]
+struct AnswerChoice {
+    text: String,
+    is_answer: bool,
 }
 
 fn fix_img_tags(input: &str) -> Result<Cow<str>> {
