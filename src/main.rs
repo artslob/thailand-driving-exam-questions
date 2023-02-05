@@ -28,14 +28,16 @@ fn main() -> Result<()> {
     questions
         .into_iter()
         .take(1)
-        .try_for_each(|question| -> Result<_> {
+        .enumerate()
+        .try_for_each(|(i, question)| -> Result<_> {
+            let index = i + 1;
             let render_context = RenderContext {
                 title: question.title,
                 img_src: question.img_src,
                 answer_choices: question.answer_choices,
                 total: total_count,
-                previous_index: None,
-                next_index: Some(2),
+                previous_index: (index - 1 > 0).then_some(index - 1),
+                next_index: (index < total_count).then_some(index + 1),
             };
             let html = tt.render("template", &render_context)?;
             std::fs::write("output/1.html", html)?;
