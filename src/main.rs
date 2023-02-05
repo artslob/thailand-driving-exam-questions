@@ -1,6 +1,6 @@
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use itertools::Itertools;
-use minidom::{Element, NSChoice};
+use minidom::{Element, NSChoice, Node};
 use regex::Regex;
 use std::borrow::Cow;
 
@@ -31,7 +31,7 @@ fn main() -> Result<()> {
             .next()
             .context("no html elements after question title")?;
 
-        if next.name() == "div" && next.attr("class") == Some(IMAGE_CLASS) {
+        let next = if next.name() == "div" && next.attr("class") == Some(IMAGE_CLASS) {
             let img = next
                 .get_child("figure", NSChoice::Any)
                 .context("image div does not have inner figure tag")?
@@ -39,7 +39,26 @@ fn main() -> Result<()> {
                 .context("figure tag does not have inner img tag")?;
             let src = img.attr("src").context("img tag does not have src attr")?;
             println!("{}", src);
+            element_iter
+                .next()
+                .context("expected to have elements after image")?
+        } else {
+            next
+        };
+
+        if next.name() != "p" {
+            bail!("expected to have questions p tag")
         }
+        let answer_choices = next
+            .nodes()
+            .flat_map(|node| match node {
+                Node::Element(element) => {
+                    (element.name() == "strong").then(|| element.texts().join(" "))
+                }
+                Node::Text(text) => Some(text.to_owned()),
+            })
+            .collect_vec();
+        dbg!(&answer_choices);
     }
     Ok(())
 }
