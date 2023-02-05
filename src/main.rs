@@ -182,11 +182,11 @@ fn download_image(url: impl Into<String>) -> Result<String> {
 }
 
 fn extract_image_name(url: impl Into<String>) -> Result<String> {
-    url.into()
-        .rsplit('/')
+    let url = url.into();
+    url.rsplit('/')
         .map(ToOwned::to_owned)
         .next()
-        .context("")
+        .context(anyhow!("url does not have /: {url}"))
 }
 
 fn fix_img_tags(input: &str) -> Result<Cow<str>> {
