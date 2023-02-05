@@ -12,8 +12,15 @@ fn main() -> Result<()> {
     let content = file.replace("&nbsp;", " ").replace("<br>", "<br/>");
     let content = fix_img_tags(&content)?;
     let prefixes = (None, String::new());
-    let mut questions = vec![];
     let root = Element::from_reader_with_prefixes(content.as_bytes(), prefixes)?;
+    let questions = parse_questions(&root)?;
+    dbg!(&questions);
+    Ok(())
+}
+
+fn parse_questions(root: &Element) -> Result<Vec<Question>> {
+    let mut questions = vec![];
+
     let mut element_iter = root.children();
     while let Some(next) = element_iter.next() {
         let is_question = next.name() == "p" && next.attr("class") == Some(QUESTION_CLASS);
@@ -71,8 +78,8 @@ fn main() -> Result<()> {
             answer_choices,
         })
     }
-    dbg!(&questions);
-    Ok(())
+
+    Ok(questions)
 }
 
 #[allow(dead_code)]
