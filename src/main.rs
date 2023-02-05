@@ -1,9 +1,10 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use itertools::Itertools;
 use minidom::{Element, NSChoice, Node};
 use regex::Regex;
 use serde::Serialize;
 use std::borrow::Cow;
+use std::path::Path;
 use tinytemplate::TinyTemplate;
 
 static QUESTION_CLASS: &str = "has-luminous-vivid-orange-color has-text-color";
@@ -18,7 +19,6 @@ fn main() -> Result<()> {
     let prefixes = (None, String::new());
     let root = Element::from_reader_with_prefixes(content.as_bytes(), prefixes)?;
     let questions = parse_questions(&root)?;
-    dbg!(&questions);
 
     let mut tt = TinyTemplate::new();
     tt.add_template("template", TEMPLATE)?;
@@ -31,7 +31,12 @@ fn main() -> Result<()> {
         .enumerate()
         .try_for_each(|(i, question)| -> Result<_> {
             let index = i + 1;
-            let img_src = question.img_src.map(download_image).transpose()?;
+            let img_src = question
+                .img_src
+                .as_ref()
+                .map(download_image)
+                .transpose()
+                .context(anyhow!("could not download image: {:?}", question.img_src))?;
             let render_context = RenderContext {
                 title: question.title,
                 img_src,
@@ -160,10 +165,15 @@ fn normalize_string(s: impl Into<String>) -> String {
 
 fn download_image(url: impl Into<String>) -> Result<String> {
     let url = url.into();
-    let bytes = reqwest::blocking::get(&url)?.error_for_status()?.bytes()?;
-    let name = extract_image_name(url)?;
+    let name = extract_image_name(&url)?;
     let img_src = format!("images/{name}");
-    std::fs::write(format!("output/{img_src}"), bytes)?;
+    let output_path = format!("output/{img_src}");
+
+    if !Path::new(&output_path).try_exists()? {
+        let bytes = reqwest::blocking::get(&url)?.error_for_status()?.bytes()?;
+        std::fs::write(output_path, bytes)?;
+    }
+
     Ok(img_src)
 }
 
