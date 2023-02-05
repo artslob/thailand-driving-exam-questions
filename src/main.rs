@@ -28,6 +28,8 @@ fn main() -> Result<()> {
         img_src: questions[0].img_src.clone(),
         answer_choices: questions[0].answer_choices.clone(),
         total: questions.len(),
+        previous_index: None,
+        next_index: Some(2),
     };
     let html = tt.render("template", &render_context)?;
     std::fs::write("output/1.html", html)?;
@@ -106,6 +108,10 @@ struct RenderContext {
     answer_choices: Vec<AnswerChoice>,
     /// total number of questions
     total: usize,
+    /// number of previous question
+    previous_index: Option<usize>,
+    /// number of next question
+    next_index: Option<usize>,
 }
 
 #[derive(Debug)]

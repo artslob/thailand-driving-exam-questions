@@ -56,6 +56,18 @@
             return array;
         }
 
+        function prev_page() \{
+            {{ if previous_index }}
+                location.href='{ previous_index }.html';
+            {{ endif }}
+        }
+
+        function next_page() \{
+            {{ if next_index }}
+                location.href='{ next_index }.html';
+            {{ endif }}
+        }
+
         window.addEventListener("keydown", function (event) \{
             if (event.defaultPrevented)
                 return;
@@ -113,6 +125,17 @@
         </button>
     </div>
 
+    {{ if previous_index }}
+        <button onclick="prev_page()" type="button" style="float: left">
+            Previous page
+        </button>
+    {{ endif }}
+
+    {{ if next_index }}
+        <button onclick="next_page()" type="button" style="float: right">
+            Next page
+        </button>
+    {{ endif }}
     <br/>
     <br/>
 </body>
