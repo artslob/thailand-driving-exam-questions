@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.68"
+itertools = "0.10.5"
 minidom = "0.15.1"
 regex = "1.7.1"

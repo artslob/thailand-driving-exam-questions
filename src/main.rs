@@ -1,14 +1,30 @@
 use anyhow::Result;
+use itertools::Itertools;
 use minidom::Element;
 use regex::Regex;
 use std::borrow::Cow;
+
+static QUESTION_CLASS: &str = "has-luminous-vivid-orange-color has-text-color";
 
 fn main() -> Result<()> {
     let file = std::fs::read_to_string("pages/7.html")?;
     let content = file.replace("&nbsp;", " ").replace("<br>", "<br/>");
     let content = fix_img_tags(&content)?;
     let prefixes = (None, String::new());
-    let _root = Element::from_reader_with_prefixes(content.as_bytes(), prefixes)?;
+    let root = Element::from_reader_with_prefixes(content.as_bytes(), prefixes)?;
+    for next in root.children() {
+        let is_question = next.name() == "p" && next.attr("class") == Some(QUESTION_CLASS);
+        if !is_question {
+            continue;
+        }
+        let question_title = next
+            .children()
+            .filter(|el| el.name() == "strong")
+            .flat_map(|el| el.texts())
+            .join(" ")
+            .replace('\n', " ");
+        println!("{}", question_title);
+    }
     Ok(())
 }
 
