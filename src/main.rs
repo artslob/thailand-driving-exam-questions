@@ -147,6 +147,15 @@ fn normalize_string(s: impl Into<String>) -> String {
         .to_owned()
 }
 
+#[allow(dead_code)]
+fn extract_image_name(url: impl Into<String>) -> Result<String> {
+    url.into()
+        .rsplit('/')
+        .map(ToOwned::to_owned)
+        .next()
+        .context("")
+}
+
 fn fix_img_tags(input: &str) -> Result<Cow<str>> {
     let regex = Regex::new("<img (?P<body>(?s:.)*?)/?>")?;
     Ok(regex.replace_all(input, "<img $body/>"))
@@ -213,6 +222,17 @@ mod tests {
         assert_eq!(
             normalize_answer_text("b.this\n   is test\n answer\n")?,
             "this is test answer"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_extract_image_name() -> Result<()> {
+        assert_eq!(
+            extract_image_name(
+                "https://move2thailand.com/wp-content/uploads/2020/02/1-3-1-c6d1.jpg.webp"
+            )?,
+            "1-3-1-c6d1.jpg.webp"
         );
         Ok(())
     }
