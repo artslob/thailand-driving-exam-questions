@@ -12,8 +12,11 @@ static IMAGE_CLASS: &str = "wp-block-image";
 
 static TEMPLATE: &str = include_str!("../template.html");
 
+static PAGES_DIR: &str = "pages";
+static OUTPUT_DIR: &str = "output";
+
 fn main() -> Result<()> {
-    let file = std::fs::read_to_string("pages/7.html")?;
+    let file = std::fs::read_to_string(format!("{PAGES_DIR}/7.html"))?;
     let content = file.replace("&nbsp;", " ").replace("<br>", "<br/>");
     let content = fix_img_tags(&content)?;
     let prefixes = (None, String::new());
@@ -46,7 +49,8 @@ fn main() -> Result<()> {
                 next_index: (index < total_count).then_some(index + 1),
             };
             let html = tt.render("template", &render_context)?;
-            std::fs::write("output/1.html", html)?;
+            let output_path = format!("{OUTPUT_DIR}/{index}.html");
+            std::fs::write(output_path, html)?;
             Ok(())
         })?;
 
@@ -167,7 +171,7 @@ fn download_image(url: impl Into<String>) -> Result<String> {
     let url = url.into();
     let name = extract_image_name(&url)?;
     let img_src = format!("images/{name}");
-    let output_path = format!("output/{img_src}");
+    let output_path = format!("{OUTPUT_DIR}/{img_src}");
 
     if !Path::new(&output_path).try_exists()? {
         let bytes = reqwest::blocking::get(&url)?.error_for_status()?.bytes()?;
