@@ -31,9 +31,10 @@ fn main() -> Result<()> {
         .enumerate()
         .try_for_each(|(i, question)| -> Result<_> {
             let index = i + 1;
+            let img_src = question.img_src.map(download_image).transpose()?;
             let render_context = RenderContext {
                 title: question.title,
-                img_src: question.img_src,
+                img_src,
                 answer_choices: question.answer_choices,
                 total: total_count,
                 previous_index: (index - 1 > 0).then_some(index - 1),
@@ -157,7 +158,15 @@ fn normalize_string(s: impl Into<String>) -> String {
         .to_owned()
 }
 
-#[allow(dead_code)]
+fn download_image(url: impl Into<String>) -> Result<String> {
+    let url = url.into();
+    let bytes = reqwest::blocking::get(&url)?.error_for_status()?.bytes()?;
+    let name = extract_image_name(url)?;
+    let img_src = format!("images/{name}");
+    std::fs::write(format!("output/{img_src}"), bytes)?;
+    Ok(img_src)
+}
+
 fn extract_image_name(url: impl Into<String>) -> Result<String> {
     url.into()
         .rsplit('/')
