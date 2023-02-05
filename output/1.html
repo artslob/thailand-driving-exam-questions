@@ -7,41 +7,47 @@
         var is_hided = true;
 
         var options = [
-            {{ for variant in answer_choices }}
-                '<p {{ if variant.is_answer }}class="answer"{{ endif }}>{ variant.text }</p>',
-            {{ endfor }}
+            
+                '<p >A. Be extra careful. Then stop the car.</p>',
+            
+                '<p >B. Be extra careful. The stop-delivery zone</p>',
+            
+                '<p class="answer">c. Drive slowly if you see that it is unsafe         for other cars or pedestrians in the way ahead. Have to stop the car before reaching the line, make way</p>',
+            
+                '<p >D. Increase caution         and park the car</p>',
+            
         ];
 
-        window.onload = function () \{
+        window.onload = function () {
             options = shuffle(options);
 
             var options_div = document.getElementById('options');
-            for (var q = 0; q < options.length; q++) \{
+            for (var q = 0; q < options.length; q++) {
                 options_div.insertAdjacentHTML('beforeend', options[q]);
             }
         };
 
-        function answer() \{
+        function answer() {
             is_hided = !is_hided;
 
             var answer_variants = document.getElementsByClassName('answer');
-            for (var i = 0; i < answer_variants.length; i++) \{
+            for (var i = 0; i < answer_variants.length; i++) {
                 answer_variants[i].style.color = (is_hided) ? 'black' : 'red';
             }
         }
 
-        function rnd() \{
+        function rnd() {
             var max = parseInt(1);
             var min = 1;
             var res = Math.floor(Math.random() * (max - min + 1)) + min;
             location.href = res + '.html';
         }
 
-        function shuffle(array) \{
+        function shuffle(array) {
             var currentIndex = array.length, temporaryValue, randomIndex;
 
             // While there remain elements to shuffle...
-            while (0 !== currentIndex) \{
+            while (0 !== currentIndex) {
 
                 // Pick a remaining element...
                 randomIndex = Math.floor(Math.random() * currentIndex);
@@ -56,11 +62,11 @@
             return array;
         }
 
-        window.addEventListener("keydown", function (event) \{
+        window.addEventListener("keydown", function (event) {
             if (event.defaultPrevented)
                 return;
 
-            switch (event.key) \{
+            switch (event.key) {
                 case "a":
                 case "A":
                 case "ArrowLeft":
@@ -89,13 +95,13 @@
         }, true);
     </script>
     <style>
-        button \{
+        button {
             width: 20%; height: 35px;
         }
     </style>
 </head>
 <body style="font-size: 20px">
-    <h3>{ title }</h3>
+    <h3>1. When finding this mark What should the driver do?</h3>
 
     <div id="options"></div>
 

@@ -2,10 +2,14 @@ use anyhow::{bail, Context, Result};
 use itertools::Itertools;
 use minidom::{Element, NSChoice, Node};
 use regex::Regex;
+use serde::Serialize;
 use std::borrow::Cow;
+use tinytemplate::TinyTemplate;
 
 static QUESTION_CLASS: &str = "has-luminous-vivid-orange-color has-text-color";
 static IMAGE_CLASS: &str = "wp-block-image";
+
+static TEMPLATE: &str = include_str!("../template.html");
 
 fn main() -> Result<()> {
     let file = std::fs::read_to_string("pages/7.html")?;
@@ -15,6 +19,13 @@ fn main() -> Result<()> {
     let root = Element::from_reader_with_prefixes(content.as_bytes(), prefixes)?;
     let questions = parse_questions(&root)?;
     dbg!(&questions);
+
+    let mut tt = TinyTemplate::new();
+    tt.add_template("template", TEMPLATE)?;
+
+    let html = tt.render("template", &questions[0])?;
+    std::fs::write("output/1.html", html)?;
+
     Ok(())
 }
 
@@ -62,11 +73,11 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
             .nodes()
             .flat_map(|node| match node {
                 Node::Element(element) => (element.name() == "strong").then(|| AnswerChoice {
-                    text: element.texts().join(" "),
+                    text: element.texts().join(" ").replace('\n', " "),
                     is_answer: true,
                 }),
                 Node::Text(text) => Some(AnswerChoice {
-                    text: text.to_owned(),
+                    text: text.to_owned().replace('\n', " "),
                     is_answer: false,
                 }),
             })
@@ -83,7 +94,7 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 struct Question {
     title: String,
     img_src: Option<String>,
@@ -91,7 +102,7 @@ struct Question {
 }
 
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 struct AnswerChoice {
     text: String,
     is_answer: bool,
