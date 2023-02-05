@@ -48,8 +48,8 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
             .children()
             .filter(|el| el.name() == "strong")
             .flat_map(|el| el.texts())
-            .join(" ")
-            .replace('\n', " ");
+            .join(" ");
+        let question_title = normalize_question_title(&question_title)?;
 
         let next = element_iter
             .next()
@@ -121,6 +121,16 @@ struct AnswerChoice {
     is_answer: bool,
 }
 
+fn normalize_question_title(title: &str) -> Result<String> {
+    let regex = Regex::new(r#"^[\d.]+"#)?;
+
+    Ok(normalize_string(regex.replace(title, "")))
+}
+
+fn normalize_string(s: impl Into<String>) -> String {
+    s.into().replace('\n', " ").trim().to_owned()
+}
+
 fn fix_img_tags(input: &str) -> Result<Cow<str>> {
     let regex = Regex::new("<img (?P<body>(?s:.)*?)/?>")?;
     Ok(regex.replace_all(input, "<img $body/>"))
@@ -160,6 +170,21 @@ mod tests {
         </figure>
         "##;
         assert_eq!(result, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn test_normalize_string() {
+        let input = "  this\n   is test\n string\n";
+        let result = normalize_string(input);
+        assert_eq!(result, "this    is test  string");
+    }
+
+    #[test]
+    fn test_normalize_question_title() -> Result<()> {
+        let input = "15.1 this\n   is test\n question\n";
+        let result = normalize_question_title(input)?;
+        assert_eq!(result, "this    is test  question");
         Ok(())
     }
 }
