@@ -31,7 +31,7 @@
         }
 
         function rnd() \{
-            var max = parseInt(1);
+            var max = { total };
             var min = 1;
             var res = Math.floor(Math.random() * (max - min + 1)) + min;
             location.href = res + '.html';
@@ -96,6 +96,10 @@
 </head>
 <body style="font-size: 20px">
     <h3>{ title }</h3>
+
+    {{ if img_src }}
+        <p>{ img_src }</p>
+    {{ endif }}
 
     <div id="options"></div>
 

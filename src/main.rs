@@ -23,7 +23,13 @@ fn main() -> Result<()> {
     let mut tt = TinyTemplate::new();
     tt.add_template("template", TEMPLATE)?;
 
-    let html = tt.render("template", &questions[0])?;
+    let render_context = RenderContext {
+        title: questions[0].title.clone(),
+        img_src: questions[0].img_src.clone(),
+        answer_choices: questions[0].answer_choices.clone(),
+        total: questions.len(),
+    };
+    let html = tt.render("template", &render_context)?;
     std::fs::write("output/1.html", html)?;
 
     Ok(())
@@ -93,16 +99,23 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
     Ok(questions)
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Serialize)]
+struct RenderContext {
+    title: String,
+    img_src: Option<String>,
+    answer_choices: Vec<AnswerChoice>,
+    /// total number of questions
+    total: usize,
+}
+
+#[derive(Debug)]
 struct Question {
     title: String,
     img_src: Option<String>,
     answer_choices: Vec<AnswerChoice>,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Clone)]
 struct AnswerChoice {
     text: String,
     is_answer: bool,
