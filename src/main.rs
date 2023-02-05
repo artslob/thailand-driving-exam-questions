@@ -23,16 +23,24 @@ fn main() -> Result<()> {
     let mut tt = TinyTemplate::new();
     tt.add_template("template", TEMPLATE)?;
 
-    let render_context = RenderContext {
-        title: questions[0].title.clone(),
-        img_src: questions[0].img_src.clone(),
-        answer_choices: questions[0].answer_choices.clone(),
-        total: questions.len(),
-        previous_index: None,
-        next_index: Some(2),
-    };
-    let html = tt.render("template", &render_context)?;
-    std::fs::write("output/1.html", html)?;
+    let total_count = questions.len();
+
+    questions
+        .into_iter()
+        .take(1)
+        .try_for_each(|question| -> Result<_> {
+            let render_context = RenderContext {
+                title: question.title,
+                img_src: question.img_src,
+                answer_choices: question.answer_choices,
+                total: total_count,
+                previous_index: None,
+                next_index: Some(2),
+            };
+            let html = tt.render("template", &render_context)?;
+            std::fs::write("output/1.html", html)?;
+            Ok(())
+        })?;
 
     Ok(())
 }
