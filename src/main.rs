@@ -120,6 +120,7 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
                     is_answer: false,
                 }),
             })
+            .filter(|choice| !choice.text.is_empty())
             .collect_vec();
 
         questions.push(Question {
