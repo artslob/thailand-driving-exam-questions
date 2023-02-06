@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, Context, Result};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use minidom::{Element, NSChoice, Node};
@@ -17,7 +17,7 @@ static PAGES_DIR: &str = "pages";
 static OUTPUT_DIR: &str = "output";
 
 fn main() -> Result<()> {
-    let file = std::fs::read_to_string(format!("{PAGES_DIR}/7.html"))?;
+    let file = std::fs::read_to_string(format!("{PAGES_DIR}/01.html"))?;
     let content = file.replace("&nbsp;", " ").replace("<br>", "<br/>");
     let content = fix_img_tags(&content)?;
     let prefixes = (None, String::new());
@@ -62,6 +62,7 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
     let mut questions = vec![];
 
     let mut element_iter = root.children();
+
     while let Some(next) = element_iter.next() {
         let is_question = next.name() == "p" && next.attr("class") == Some(QUESTION_CLASS);
         if !is_question {
@@ -75,29 +76,35 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
         let question_title = normalize_question_title(&question_title)?;
 
         let next = element_iter
-            .next()
+            .by_ref()
+            .find(|el| {
+                let is_image = el.name() == "div" && el.attr("class") == Some(IMAGE_CLASS);
+                let is_answer_choice = el.name() == "p";
+                is_image || is_answer_choice
+            })
             .context("no html elements after question title")?;
 
-        let (next, img_src) = if next.name() == "div" && next.attr("class") == Some(IMAGE_CLASS) {
-            let img = next
+        let (img_src, next) = if next.name() == "div" && next.attr("class") == Some(IMAGE_CLASS) {
+            let src = next
                 .get_child("figure", NSChoice::Any)
                 .context("image div does not have inner figure tag")?
                 .get_child("img", NSChoice::Any)
-                .context("figure tag does not have inner img tag")?;
-            let src = img.attr("src").context("img tag does not have src attr")?;
-            (
-                element_iter
-                    .next()
-                    .context("expected to have elements after image")?,
-                Some(src.to_owned()),
-            )
+                .context("figure tag does not have inner img tag")?
+                .attr("src")
+                .context("img tag does not have src attr")?;
+
+            let question_element = element_iter
+                .by_ref()
+                .find(|el| {
+                    let is_answer_choice = el.name() == "p";
+                    is_answer_choice
+                })
+                .context("expected to have questions p tag")?;
+            (Some(src.to_owned()), question_element)
         } else {
-            (next, None)
+            (None, next)
         };
 
-        if next.name() != "p" {
-            bail!("expected to have questions p tag")
-        }
         let answer_choices = next
             .nodes()
             .flat_map(|node| match node {
