@@ -31,7 +31,6 @@ fn main() -> Result<()> {
 
     questions
         .into_iter()
-        .take(1)
         .enumerate()
         .try_for_each(|(i, question)| -> Result<_> {
             let index = i + 1;
