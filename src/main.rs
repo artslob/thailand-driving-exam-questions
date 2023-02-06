@@ -1,5 +1,6 @@
 use anyhow::{anyhow, bail, Context, Result};
 use itertools::Itertools;
+use lazy_static::lazy_static;
 use minidom::{Element, NSChoice, Node};
 use regex::Regex;
 use serde::Serialize;
@@ -148,14 +149,17 @@ struct AnswerChoice {
 }
 
 fn normalize_question_title(title: &str) -> Result<String> {
-    let regex = Regex::new(r#"^[\d.]+"#)?;
-
-    Ok(normalize_string(regex.replace(title.trim(), "")))
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r#"^[\d.]+"#).unwrap();
+    }
+    Ok(normalize_string(RE.replace(title.trim(), "")))
 }
 
 fn normalize_answer_text(text: impl Into<String>) -> Result<String> {
-    let regex = Regex::new(r#"^[[:alpha:]]\."#)?;
-    Ok(normalize_string(regex.replace(text.into().trim(), "")))
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r#"^[[:alpha:]]\."#).unwrap();
+    }
+    Ok(normalize_string(RE.replace(text.into().trim(), "")))
 }
 
 fn normalize_string(s: impl Into<String>) -> String {
@@ -190,8 +194,10 @@ fn extract_image_name(url: impl Into<String>) -> Result<String> {
 }
 
 fn fix_img_tags(input: &str) -> Result<Cow<str>> {
-    let regex = Regex::new("<img (?P<body>(?s:.)*?)/?>")?;
-    Ok(regex.replace_all(input, "<img $body/>"))
+    lazy_static! {
+        static ref RE: Regex = Regex::new("<img (?P<body>(?s:.)*?)/?>").unwrap();
+    }
+    Ok(RE.replace_all(input, "<img $body/>"))
 }
 
 #[cfg(test)]
