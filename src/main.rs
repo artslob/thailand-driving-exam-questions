@@ -30,9 +30,6 @@ fn main() -> Result<()> {
             })
             .sorted_by_key(|(_, page_number)| *page_number)
             .map(|(entry, _)| -> Result<_> {
-                if entry.file_name() != "01.html" && entry.file_name() != "02.html" {
-                    return Ok(vec![]);
-                }
                 let content = std::fs::read_to_string(entry.path())?;
                 let content = content.replace("&nbsp;", " ").replace("<br>", "<br/>");
                 let content = fix_img_tags(&content);
