@@ -6,6 +6,7 @@ use regex::Regex;
 use serde::Serialize;
 use std::borrow::Cow;
 use std::path::Path;
+use std::str::FromStr;
 use tinytemplate::TinyTemplate;
 
 static QUESTION_CLASS: &str = "has-luminous-vivid-orange-color has-text-color";
@@ -21,8 +22,14 @@ fn main() -> Result<()> {
 
     let questions: Vec<_> = itertools::process_results(file_iter, |entry_iter| {
         entry_iter
-            .sorted_by_key(|entry| entry.file_name())
-            .map(|entry| -> Result<_> {
+            .flat_map(|entry| {
+                let file_name = entry.file_name();
+                let (filename, _) = file_name.to_str()?.rsplit_once(".html")?;
+                let page_number = <u32>::from_str(filename).ok()?;
+                Some((entry, page_number))
+            })
+            .sorted_by_key(|(_, page_number)| *page_number)
+            .map(|(entry, _)| -> Result<_> {
                 if entry.file_name() != "01.html" && entry.file_name() != "02.html" {
                     return Ok(vec![]);
                 }
