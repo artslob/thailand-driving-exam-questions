@@ -17,12 +17,25 @@ static PAGES_DIR: &str = "pages";
 static OUTPUT_DIR: &str = "output";
 
 fn main() -> Result<()> {
-    let file = std::fs::read_to_string(format!("{PAGES_DIR}/01.html"))?;
-    let content = file.replace("&nbsp;", " ").replace("<br>", "<br/>");
-    let content = fix_img_tags(&content);
-    let prefixes = (None, String::new());
-    let root = Element::from_reader_with_prefixes(content.as_bytes(), prefixes)?;
-    let questions = parse_questions(&root)?;
+    let file_iter = std::fs::read_dir(PAGES_DIR)?;
+
+    let questions: Vec<_> = itertools::process_results(file_iter, |entry_iter| {
+        entry_iter
+            .sorted_by_key(|entry| entry.file_name())
+            .map(|entry| -> Result<_> {
+                if entry.file_name() != "01.html" && entry.file_name() != "02.html" {
+                    return Ok(vec![]);
+                }
+                let content = std::fs::read_to_string(entry.path())?;
+                let content = content.replace("&nbsp;", " ").replace("<br>", "<br/>");
+                let content = fix_img_tags(&content);
+                let prefixes = (None, String::new());
+                let root = Element::from_reader_with_prefixes(content.as_bytes(), prefixes)?;
+                parse_questions(&root)
+            })
+            .flatten_ok()
+            .try_collect()
+    })??;
 
     let mut tt = TinyTemplate::new();
     tt.add_template("template", TEMPLATE)?;
@@ -209,9 +222,9 @@ fn extract_image_name(url: impl Into<String>) -> Result<String> {
 
 fn fix_img_tags(input: &str) -> Cow<str> {
     lazy_static! {
-        static ref RE: Regex = Regex::new("<img (?P<body>(?s:.)*?)/?>").unwrap();
+        static ref RE: Regex = Regex::new("<img(?P<body>(?s:.)*?)/?>").unwrap();
     }
-    RE.replace_all(input, "<img $body/>")
+    RE.replace_all(input, "<img$body/>")
 }
 
 #[cfg(test)]
@@ -232,6 +245,14 @@ mod tests {
           <img decoding="async" src="https://move2thailand.com/wp-content/uploads/2020/02/1-3-1-c6d1.jpg.webp"
             alt="Thai Driving License Exam Test Questions and Answers in 2020" class="wp-image-6962" width="300" height="211"/>
         </figure>
+        <figure class="wp-block-ta-image wp-block-image"><a class="thirstylinkimg" rel="nofollow noindex" title="prakan-motorbike-insurance"
+                                                            href="https://move2thailand.com/recommends/motorbike-insurance/" data-shortcode="true"><img
+                decoding="async" src="https://move2thailand.com/wp-content/uploads/2020/10/motorbike-insurance-thailand.jpg.webp" alt=""
+                class="wp-image-14258"
+                srcset="https://move2thailand.com/wp-content/uploads/2020/10/motorbike-insurance-thailand.jpg.webp 800w, https://move2thailand.com/wp-content/uploads/2020/10/motorbike-insurance-thailand-300x60.jpg.webp 300w, https://move2thailand.com/wp-content/uploads/2020/10/motorbike-insurance-thailand-768x154.jpg.webp 768w"
+                sizes="(max-width: 800px) 100vw, 800px" width="800" height="160"></a>
+            <figcaption></figcaption>
+        </figure>
         "##;
         let result = fix_img_tags(input);
         let expected = r##"
@@ -245,6 +266,14 @@ mod tests {
         <figure class="aligncenter size-large">
           <img decoding="async" src="https://move2thailand.com/wp-content/uploads/2020/02/1-3-1-c6d1.jpg.webp"
             alt="Thai Driving License Exam Test Questions and Answers in 2020" class="wp-image-6962" width="300" height="211"/>
+        </figure>
+        <figure class="wp-block-ta-image wp-block-image"><a class="thirstylinkimg" rel="nofollow noindex" title="prakan-motorbike-insurance"
+                                                            href="https://move2thailand.com/recommends/motorbike-insurance/" data-shortcode="true"><img
+                decoding="async" src="https://move2thailand.com/wp-content/uploads/2020/10/motorbike-insurance-thailand.jpg.webp" alt=""
+                class="wp-image-14258"
+                srcset="https://move2thailand.com/wp-content/uploads/2020/10/motorbike-insurance-thailand.jpg.webp 800w, https://move2thailand.com/wp-content/uploads/2020/10/motorbike-insurance-thailand-300x60.jpg.webp 300w, https://move2thailand.com/wp-content/uploads/2020/10/motorbike-insurance-thailand-768x154.jpg.webp 768w"
+                sizes="(max-width: 800px) 100vw, 800px" width="800" height="160"/></a>
+            <figcaption></figcaption>
         </figure>
         "##;
         assert_eq!(result, expected);
