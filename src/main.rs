@@ -81,13 +81,13 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
         let next = element_iter
             .by_ref()
             .find(|el| {
-                let is_image = el.name() == "div" && el.attr("class") == Some(IMAGE_CLASS);
+                let is_image = is_image_element(el);
                 let is_answer_choice = el.name() == "p";
                 is_image || is_answer_choice
             })
             .context("no html elements after question title")?;
 
-        let (img_src, next) = if next.name() == "div" && next.attr("class") == Some(IMAGE_CLASS) {
+        let (img_src, next) = if is_image_element(next) {
             let src = next
                 .get_child("figure", NSChoice::Any)
                 .context("image div does not have inner figure tag")?
@@ -156,6 +156,10 @@ struct Question {
 struct AnswerChoice {
     text: String,
     is_answer: bool,
+}
+
+fn is_image_element(e: &Element) -> bool {
+    e.name() == "div" && e.attr("class") == Some(IMAGE_CLASS)
 }
 
 fn normalize_question_title(title: &str) -> Result<String> {
