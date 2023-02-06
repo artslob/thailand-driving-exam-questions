@@ -68,10 +68,13 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
         if !is_question {
             continue;
         }
+
         let question_title = next
-            .children()
-            .filter(|el| el.name() == "strong")
-            .flat_map(|el| el.texts())
+            .nodes()
+            .map(|node| match node {
+                Node::Element(el) => el.texts().join(" "),
+                Node::Text(text) => text.to_owned(),
+            })
             .join(" ");
         let question_title = normalize_question_title(&question_title)?;
 
