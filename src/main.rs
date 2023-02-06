@@ -19,7 +19,7 @@ static OUTPUT_DIR: &str = "output";
 fn main() -> Result<()> {
     let file = std::fs::read_to_string(format!("{PAGES_DIR}/01.html"))?;
     let content = file.replace("&nbsp;", " ").replace("<br>", "<br/>");
-    let content = fix_img_tags(&content)?;
+    let content = fix_img_tags(&content);
     let prefixes = (None, String::new());
     let root = Element::from_reader_with_prefixes(content.as_bytes(), prefixes)?;
     let questions = parse_questions(&root)?;
@@ -76,7 +76,7 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
                 Node::Text(text) => text.to_owned(),
             })
             .join(" ");
-        let question_title = normalize_question_title(&question_title)?;
+        let question_title = normalize_question_title(&question_title);
 
         let next = element_iter
             .by_ref()
@@ -112,11 +112,11 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
             .nodes()
             .flat_map(|node| match node {
                 Node::Element(element) => (element.name() == "strong").then(|| AnswerChoice {
-                    text: normalize_answer_text(element.texts().join(" ")).unwrap(),
+                    text: normalize_answer_text(element.texts().join(" ")),
                     is_answer: true,
                 }),
                 Node::Text(text) => Some(AnswerChoice {
-                    text: normalize_answer_text(text).unwrap(),
+                    text: normalize_answer_text(text),
                     is_answer: false,
                 }),
             })
@@ -162,18 +162,18 @@ fn is_image_element(e: &Element) -> bool {
     e.name() == "div" && e.attr("class") == Some(IMAGE_CLASS)
 }
 
-fn normalize_question_title(title: &str) -> Result<String> {
+fn normalize_question_title(title: &str) -> String {
     lazy_static! {
         static ref RE: Regex = Regex::new(r#"^[\d.]+"#).unwrap();
     }
-    Ok(normalize_string(RE.replace(title.trim(), "")))
+    normalize_string(RE.replace(title.trim(), ""))
 }
 
-fn normalize_answer_text(text: impl Into<String>) -> Result<String> {
+fn normalize_answer_text(text: impl Into<String>) -> String {
     lazy_static! {
         static ref RE: Regex = Regex::new(r#"^[[:alpha:]]\."#).unwrap();
     }
-    Ok(normalize_string(RE.replace(text.into().trim(), "")))
+    normalize_string(RE.replace(text.into().trim(), ""))
 }
 
 fn normalize_string(s: impl Into<String>) -> String {
@@ -207,11 +207,11 @@ fn extract_image_name(url: impl Into<String>) -> Result<String> {
         .context(anyhow!("url does not have /: {url}"))
 }
 
-fn fix_img_tags(input: &str) -> Result<Cow<str>> {
+fn fix_img_tags(input: &str) -> Cow<str> {
     lazy_static! {
         static ref RE: Regex = Regex::new("<img (?P<body>(?s:.)*?)/?>").unwrap();
     }
-    Ok(RE.replace_all(input, "<img $body/>"))
+    RE.replace_all(input, "<img $body/>")
 }
 
 #[cfg(test)]
@@ -233,7 +233,7 @@ mod tests {
             alt="Thai Driving License Exam Test Questions and Answers in 2020" class="wp-image-6962" width="300" height="211"/>
         </figure>
         "##;
-        let result = fix_img_tags(input)?;
+        let result = fix_img_tags(input);
         let expected = r##"
         <img decoding="async" src="https://move2thailand.com/wp-content/uploads/2020/02/1-3-1-c6d1.jpg.webp"
             class="wp-image-6962" width="300" height="211"/>
@@ -261,7 +261,7 @@ mod tests {
     #[test]
     fn test_normalize_question_title() -> Result<()> {
         let input = "15.1 this\n   is test\n question\n";
-        let result = normalize_question_title(input)?;
+        let result = normalize_question_title(input);
         assert_eq!(result, "this is test question");
         Ok(())
     }
@@ -269,11 +269,11 @@ mod tests {
     #[test]
     fn test_normalize_answer_text() -> Result<()> {
         assert_eq!(
-            normalize_answer_text("D. this\n   is test\n answer\n")?,
+            normalize_answer_text("D. this\n   is test\n answer\n"),
             "this is test answer"
         );
         assert_eq!(
-            normalize_answer_text("b.this\n   is test\n answer\n")?,
+            normalize_answer_text("b.this\n   is test\n answer\n"),
             "this is test answer"
         );
         Ok(())
