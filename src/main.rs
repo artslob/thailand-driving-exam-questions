@@ -128,13 +128,27 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
             .nodes()
             .flat_map(|node| match node {
                 Node::Element(element) => (element.name() == "strong").then(|| AnswerChoice {
-                    text: normalize_answer_text(element.texts().join(" ")),
+                    text: element.texts().join(" ").trim().to_owned(),
                     is_answer: true,
                 }),
                 Node::Text(text) => Some(AnswerChoice {
-                    text: normalize_answer_text(text),
+                    text: text.trim().to_owned(),
                     is_answer: false,
                 }),
+            })
+            .coalesce(|prev, cur| {
+                if !QUESTION_REGEX.is_match(&cur.text) {
+                    Ok(AnswerChoice {
+                        text: prev.text + " " + cur.text.as_ref(),
+                        is_answer: prev.is_answer || cur.is_answer,
+                    })
+                } else {
+                    Err((prev, cur))
+                }
+            })
+            .map(|mut answer_choice| {
+                answer_choice.text = normalize_answer_text(answer_choice.text);
+                answer_choice
             })
             .filter(|choice| !choice.text.is_empty())
             .collect_vec();
@@ -186,11 +200,12 @@ fn normalize_question_title(title: &str) -> String {
     normalize_string(RE.replace(title.trim(), ""))
 }
 
+lazy_static! {
+    static ref QUESTION_REGEX: Regex = Regex::new(r#"^[[:alpha:]]\."#).unwrap();
+}
+
 fn normalize_answer_text(text: impl Into<String>) -> String {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r#"^[[:alpha:]]\."#).unwrap();
-    }
-    normalize_string(RE.replace(text.into().trim(), ""))
+    normalize_string(QUESTION_REGEX.replace(text.into().trim(), ""))
 }
 
 fn normalize_string(s: impl Into<String>) -> String {
