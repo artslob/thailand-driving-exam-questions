@@ -34,7 +34,7 @@
             var max = { total };
             var min = 1;
             var res = Math.floor(Math.random() * (max - min + 1)) + min;
-            location.href = '/' + res;
+            location.href = '../' + res;
         }
 
         function shuffle(array) \{
@@ -58,13 +58,13 @@
 
         function prev_page() \{
             {{ if previous_index }}
-                location.href='/{ previous_index }';
+                location.href='../{ previous_index }';
             {{ endif }}
         }
 
         function next_page() \{
             {{ if next_index }}
-                location.href='/{ next_index }';
+                location.href='../{ next_index }';
             {{ endif }}
         }
 
