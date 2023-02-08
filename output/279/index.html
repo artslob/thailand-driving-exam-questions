@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Thailand driving exam questions by artslob</title>
+    <script>
+        var is_hided = true;
+
+        var options = [
+            
+                '<p >Continue driving as normal. Because already obeying traffic rules Not driving fast Didn’t break the law</p>',
+            
+                '<p class="answer">Open the way to avoid the car overtaking. By turning on the left turn signal and slowly turning the car into the left lane or middle lane</p>',
+            
+                '<p >Drive more slowly than before. To confine or intercept the rear car to drive at the speed according to traffic regulations Same as you</p>',
+            
+                '<p >Drive a car fleeing forward at a higher speed than that car</p>',
+            
+        ];
+
+        window.onload = function () {
+            options = shuffle(options);
+
+            var options_div = document.getElementById('options');
+            for (var q = 0; q < options.length; q++) {
+                options_div.insertAdjacentHTML('beforeend', options[q]);
+            }
+        };
+
+        function answer() {
+            is_hided = !is_hided;
+
+            var answer_variants = document.getElementsByClassName('answer');
+            for (var i = 0; i < answer_variants.length; i++) {
+                answer_variants[i].style.color = (is_hided) ? 'black' : 'red';
+            }
+        }
+
+        function rnd() {
+            var max = 420;
+            var min = 1;
+            var res = Math.floor(Math.random() * (max - min + 1)) + min;
+            location.href = '/' + res;
+        }
+
+        function shuffle(array) {
+            var currentIndex = array.length, temporaryValue, randomIndex;
+
+            // While there remain elements to shuffle...
+            while (0 !== currentIndex) {
+
+                // Pick a remaining element...
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex -= 1;
+
+                // And swap it with the current element.
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
+            }
+
+            return array;
+        }
+
+        function prev_page() {
+            
+                location.href='/278';
+            
+        }
+
+        function next_page() {
+            
+                location.href='/280';
+            
+        }
+
+        window.addEventListener("keydown", function (event) {
+            if (event.defaultPrevented)
+                return;
+
+            switch (event.key) {
+                case "a":
+                case "A":
+                case "ArrowLeft":
+                    prev_page();
+                    break;
+                case "d":
+                case "D":
+                case "ArrowRight":
+                    next_page();
+                    break;
+                case "w":
+                case "W":
+                case "ArrowUp":
+                    answer();
+                    break;
+                case "s":
+                case "S":
+                case "ArrowDown":
+                    rnd();
+                    break;
+                default:
+                    return;
+            }
+
+            event.preventDefault();
+        }, true);
+    </script>
+    <style>
+        button {
+            width: 20%; height: 35px;
+        }
+    </style>
+</head>
+<body style="font-size: 20px">
+    <h3>While you drive on the highway Use the speed required by law. In the far right lane There is a car running at high speed or flashing high lights from behind you to Ask for things that you should do is</h3>
+
+    
+
+    <div id="options"></div>
+
+    <div style="text-align: center">
+        <button onclick="answer()">Answer!</button>
+
+        <br/><br/>
+
+        <button onclick="rnd();" id="rnd" type="button" style="float: none">
+            Random question
+        </button>
+    </div>
+
+    
+        <button onclick="prev_page()" type="button" style="float: left">
+            Previous page
+        </button>
+    
+
+    
+        <button onclick="next_page()" type="button" style="float: right">
+            Next page
+        </button>
+    
+    <br/>
+    <br/>
+</body>
+</html>
