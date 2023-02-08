@@ -66,7 +66,9 @@ fn main() -> Result<()> {
                 next_index: (index < total_count).then_some(index + 1),
             };
             let html = tt.render("template", &render_context)?;
-            let output_path = format!("{OUTPUT_DIR}/{index}.html");
+            let output_dir = format!("{OUTPUT_DIR}/{index}");
+            std::fs::create_dir_all(&output_dir)?;
+            let output_path = format!("{output_dir}/index.html");
             std::fs::write(output_path, html)?;
             Ok(())
         })?;
