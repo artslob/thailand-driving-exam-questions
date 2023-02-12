@@ -29,13 +29,13 @@ fn main() -> Result<()> {
                 Some((entry, page_number))
             })
             .sorted_by_key(|(_, page_number)| *page_number)
-            .map(|(entry, _)| -> Result<_> {
+            .map(|(entry, page_number)| -> Result<_> {
                 let content = std::fs::read_to_string(entry.path())?;
                 let content = content.replace("&nbsp;", " ").replace("<br>", "<br/>");
                 let content = fix_img_tags(&content);
                 let prefixes = (None, String::new());
                 let root = Element::from_reader_with_prefixes(content.as_bytes(), prefixes)?;
-                parse_questions(&root)
+                parse_questions(&root, page_number)
             })
             .flatten_ok()
             .try_collect()
@@ -64,6 +64,7 @@ fn main() -> Result<()> {
                 total: total_count,
                 previous_index: (index - 1 > 0).then_some(index - 1),
                 next_index: (index < total_count).then_some(index + 1),
+                page_number: question.page_number,
             };
             let html = tt.render("template", &render_context)?;
             let output_dir = format!("{OUTPUT_DIR}/{index}");
@@ -76,7 +77,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn parse_questions(root: &Element) -> Result<Vec<Question>> {
+fn parse_questions(root: &Element, page_number: u32) -> Result<Vec<Question>> {
     let mut questions = vec![];
 
     let mut element_iter = root.children();
@@ -159,6 +160,7 @@ fn parse_questions(root: &Element) -> Result<Vec<Question>> {
             title: question_title,
             img_src,
             answer_choices,
+            page_number,
         })
     }
 
@@ -176,6 +178,8 @@ struct RenderContext {
     previous_index: Option<usize>,
     /// number of next question
     next_index: Option<usize>,
+    /// source page number
+    page_number: u32,
 }
 
 #[derive(Debug)]
@@ -183,6 +187,8 @@ struct Question {
     title: String,
     img_src: Option<String>,
     answer_choices: Vec<AnswerChoice>,
+    /// source page number
+    page_number: u32,
 }
 
 #[derive(Debug, Serialize, Clone)]

@@ -6,6 +6,8 @@
     <script>
         var is_hided = true;
 
+        // { page_number } original source page
+
         var options = [
             {{ for variant in answer_choices }}
                 '<p {{ if variant.is_answer }}class="answer"{{ endif }}>{ variant.text }</p>',
