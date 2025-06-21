@@ -15,6 +15,7 @@ static IMAGE_CLASS: &str = "wp-block-image";
 static TEMPLATE: &str = include_str!("../template.html");
 
 static PAGES_DIR: &str = "pages";
+static IMAGES_DIR: &str = "images";
 static OUTPUT_DIR: &str = "output";
 
 fn main() -> Result<()> {
@@ -46,6 +47,9 @@ fn main() -> Result<()> {
 
     let total_count = questions.len();
 
+    std::fs::create_dir_all(OUTPUT_DIR)?;
+    std::fs::create_dir_all(format!("{OUTPUT_DIR}/{IMAGES_DIR}"))?;
+
     questions
         .into_iter()
         .enumerate()
@@ -57,12 +61,13 @@ fn main() -> Result<()> {
                 .map(download_image)
                 .transpose()
                 .context(anyhow!("could not download image: {:?}", question.img_src))?;
+            let easter_egg = index == 404;
             let render_context = RenderContext {
                 title: question.title,
                 img_src,
                 answer_choices: question.answer_choices,
                 total: total_count,
-                easter_egg: index == 404,
+                easter_egg,
                 previous_index: (index - 1 > 0).then_some(index - 1),
                 next_index: (index < total_count).then_some(index + 1),
                 page_number: question.page_number,
@@ -72,6 +77,10 @@ fn main() -> Result<()> {
             std::fs::create_dir_all(&output_dir)?;
             let output_path = format!("{output_dir}/index.html");
             std::fs::write(output_path, html)?;
+            if easter_egg {
+                let to = format!("{output_dir}/sound.mp3");
+                std::fs::copy("resources/sound.mp3", &to)?;
+            }
             Ok(())
         })?;
 
@@ -235,7 +244,8 @@ fn download_image(url: impl Into<String>) -> Result<String> {
 
     if !Path::new(&output_path).try_exists()? {
         let bytes = reqwest::blocking::get(&url)?.error_for_status()?.bytes()?;
-        std::fs::write(output_path, bytes)?;
+        std::fs::write(&output_path, bytes)
+            .context(anyhow!("could not write image to {output_path}"))?;
     }
 
     Ok(img_src)
