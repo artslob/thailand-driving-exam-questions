@@ -62,6 +62,7 @@ fn main() -> Result<()> {
                 img_src,
                 answer_choices: question.answer_choices,
                 total: total_count,
+                easter_egg: index == 404,
                 previous_index: (index - 1 > 0).then_some(index - 1),
                 next_index: (index < total_count).then_some(index + 1),
                 page_number: question.page_number,
@@ -180,6 +181,7 @@ struct RenderContext {
     next_index: Option<usize>,
     /// source page number
     page_number: u32,
+    easter_egg: bool,
 }
 
 #[derive(Debug)]

@@ -21,6 +21,10 @@
             for (var q = 0; q < options.length; q++) \{
                 options_div.insertAdjacentHTML('beforeend', options[q]);
             }
+
+            {{ if easter_egg }}
+                document.getElementById("my_audio").play();
+            {{ endif }}
         };
 
         function answer() \{
@@ -168,6 +172,10 @@
     {{ endif }}
 
     <div id="options"></div>
+
+    {{ if easter_egg }}
+        <audio id="my_audio" src="sound.mp3"></audio>
+    {{ endif }}
 
     <div style="text-align: center">
         <button onclick="answer()">Answer!</button>
