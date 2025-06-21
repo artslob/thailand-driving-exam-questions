@@ -68,7 +68,7 @@ fn main() -> Result<()> {
                 answer_choices: question.answer_choices,
                 total: total_count,
                 easter_egg,
-                previous_index: (index - 1 > 0).then_some(index - 1),
+                previous_index: (index >= 2).then_some(index - 1),
                 next_index: (index < total_count).then_some(index + 1),
                 page_number: question.page_number,
             };
