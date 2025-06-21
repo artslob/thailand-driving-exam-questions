@@ -27,6 +27,10 @@
             for (var q = 0; q < options.length; q++) {
                 options_div.insertAdjacentHTML('beforeend', options[q]);
             }
+
+            
+                document.getElementById("my_audio").play();
+            
         };
 
         function answer() {
@@ -172,6 +176,10 @@
     
 
     <div id="options"></div>
+
+    
+        <audio id="my_audio" src="sound.mp3"></audio>
+    
 
     <div style="text-align: center">
         <button onclick="answer()">Answer!</button>
